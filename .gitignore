@@ -1,0 +1,14 @@
+node_modules
+.vercel
+attachments
+artifacts
+screenshots
+backend
+*.zip
+alhassan-backend.txt
+public/alhassan-backend.txt
+.grok/skills
+.grok/references
+AGENTS.md
+.env
+.env.*
