@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/", label: "الرئيسية" },
   { to: "/track", label: "تتبّع شحنة" },
+  { to: "/reviews", label: "آراء العملاء" },
   { to: "/about", label: "من نحن" },
   { to: "/contact", label: "تواصل" },
 ] as const;

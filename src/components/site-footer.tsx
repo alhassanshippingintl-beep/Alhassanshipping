@@ -57,6 +57,11 @@ export function SiteFooter() {
             </li>
             <li>{COMPANY.hours}</li>
             <li>
+              <Link to="/reviews" className="hover:text-on-navy">
+                آراء العملاء
+              </Link>
+            </li>
+            <li>
               <Link to="/track" className="hover:text-on-navy">
                 تتبّع شحنة
               </Link>

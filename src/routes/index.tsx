@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plane, Ship, Truck, Warehouse } from "lucide-react";
 import { PageShell } from "@/components/site-footer";
+import { ReviewCard } from "@/components/review-card";
 import { TrackForm } from "@/components/track-form";
 import { Button } from "@/components/ui/button";
 import { COMPANY } from "@/lib/company";
 import { SERVICES } from "@/lib/services";
+import { TESTIMONIALS } from "@/lib/testimonials";
 
 export const Route = createFileRoute("/")({ component: HomePage });
 
@@ -88,6 +90,25 @@ function HomePage() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-paper px-5 py-16">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-center text-xs font-bold tracking-wide text-brand">آراء العملاء منذ {COMPANY.founded}</p>
+          <h2 className="mb-10 text-center text-3xl font-black">يثقون في الحسن للشحن</h2>
+          <div className="grid gap-6 md:grid-cols-3">
+            {TESTIMONIALS.slice(-6)
+              .reverse()
+              .map((item) => (
+              <ReviewCard key={`${item.name}-${item.year}`} item={item} />
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Button asChild variant="outline">
+              <Link to="/reviews">كل الآراء</Link>
+            </Button>
           </div>
         </div>
       </section>
