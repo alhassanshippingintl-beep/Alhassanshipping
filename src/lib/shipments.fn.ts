@@ -275,6 +275,8 @@ export const submitInquiry = createServerFn({ method: "POST" })
     message: requireText(data.message, "الرسالة", 8, 2000),
   }))
   .handler(async ({ data }) => {
+    const { assertRateLimit, clientIp } = await import("@/lib/rate-limit.server");
+    assertRateLimit(`inquiry:${clientIp()}`, 8, 60 * 60 * 1000);
     const sql = await getSql();
     await sql`
       insert into inquiries (name, phone, email, service, message)

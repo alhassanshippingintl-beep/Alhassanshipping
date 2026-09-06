@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Download } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
@@ -55,14 +54,6 @@ function LoginPage() {
             {pending ? "جارٍ…" : "دخول"}
           </Button>
         </form>
-        <a
-          href="/alhassan-backend.txt"
-          download="alhassan-backend.txt"
-          className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-navy bg-navy text-sm font-bold text-on-navy hover:bg-navy-2"
-        >
-          <Download className="size-4" />
-          تحميل ملف الباك اند
-        </a>
         <p className="mt-6 text-center text-sm">
           <Link to="/" className="font-bold text-brand">
             العودة للموقع

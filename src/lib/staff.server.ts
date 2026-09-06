@@ -4,8 +4,14 @@ import { STAFF_COOKIE } from "./staff";
 
 const STAFF_USERNAME = "alhassan";
 const STAFF_PASSWORD = "444222";
-const SECRET = new TextEncoder().encode("alhassan-staff-session-v1");
-const MAX_AGE = 60 * 60 * 24 * 30;
+const SECRET = new TextEncoder().encode(
+  process.env.STAFF_JWT_SECRET ?? "ah-staff-jwt-v2-7c91e4b0d6a28f35",
+);
+const MAX_AGE = 60 * 60 * 24 * 7;
+
+function cookieSecure() {
+  return process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+}
 
 export function credentialsOk(username: string, password: string) {
   return username.trim().toLowerCase() === STAFF_USERNAME && password === STAFF_PASSWORD;
@@ -36,7 +42,7 @@ export function setStaffCookie(token: string) {
     httpOnly: true,
     sameSite: "lax",
     maxAge: MAX_AGE,
-    secure: true,
+    secure: cookieSecure(),
   });
 }
 
@@ -46,7 +52,7 @@ export function clearStaffCookie() {
     httpOnly: true,
     sameSite: "lax",
     maxAge: 0,
-    secure: true,
+    secure: cookieSecure(),
   });
 }
 

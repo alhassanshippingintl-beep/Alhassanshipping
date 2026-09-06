@@ -7,6 +7,8 @@ export const staffLogin = createServerFn({ method: "POST" })
     password: String(data.password ?? ""),
   }))
   .handler(async ({ data }) => {
+    const { assertRateLimit, clientIp } = await import("@/lib/rate-limit.server");
+    assertRateLimit(`login:${clientIp()}`, 5, 15 * 60 * 1000);
     const staff = await import("@/lib/staff.server");
     if (!staff.credentialsOk(data.username, data.password)) {
       throw new Error("اسم المستخدم أو الرقم السري غير صحيح");

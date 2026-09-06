@@ -67,13 +67,6 @@ function AdminLayout() {
             })}
           </nav>
           <div className="flex items-center gap-3">
-            <a
-              href="/alhassan-backend.txt"
-              download="alhassan-backend.txt"
-              className="hidden text-xs font-bold text-muted hover:text-brand sm:inline"
-            >
-              تحميل الباك اند
-            </a>
             <Link to="/" className="hidden text-xs font-bold text-muted hover:text-brand sm:inline">
               عرض الموقع
             </Link>

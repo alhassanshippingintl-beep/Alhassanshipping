@@ -43,7 +43,12 @@ function TrackPage() {
         {trackingNumber && result.data?.shipment ? (
           <TrackResult shipment={result.data.shipment} events={result.data.events} />
         ) : null}
-        {trackingNumber && result.data && !result.data.shipment ? (
+        {trackingNumber && result.isError ? (
+          <p className="rounded-2xl border border-line bg-surface p-6 text-center font-bold text-brand">
+            تعذّر الاتصال بالنظام. حاول مرة أخرى أو تواصل مع الشركة.
+          </p>
+        ) : null}
+        {trackingNumber && !result.isError && result.data && !result.data.shipment ? (
           <p className="rounded-2xl border border-line bg-surface p-6 text-center font-bold text-brand">
             لا توجد شحنة بهذا الرقم. تأكد من الرقم أو تواصل مع الشركة.
           </p>

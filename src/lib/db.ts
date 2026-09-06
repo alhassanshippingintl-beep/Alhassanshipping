@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
 
 /** Which database backend is active. */
@@ -48,6 +51,7 @@ const globalRef = globalThis as typeof globalThis & {
   __pgSqlPromise__?: Promise<Sql>;
   __pgliteInstance__?: Promise<import("@electric-sql/pglite").PGlite>;
   __pgliteMigrateChain__?: Promise<void>;
+  __neonMigrateChain__?: Promise<void>;
 };
 
 /**
@@ -94,10 +98,43 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({ connectionString: databaseUrl });
-    return toSql(async <T>(text: string, params: unknown[]) => {
+    const sql = toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
     });
+    const migrate = async () => {
+      const client = await pool.connect();
+      try {
+        await client.query(
+          "create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())",
+        );
+        const doneRows = await client.query<{ name: string }>("select name from _migrations");
+        const done = doneRows.rows.map((r) => r.name);
+        const migrations = import.meta.glob("/migrations/*.sql", {
+          query: "?raw",
+          import: "default",
+          eager: true,
+        }) as Record<string, string>;
+        for (const { name, path } of pendingMigrations(Object.keys(migrations), done)) {
+          await client.query("begin");
+          try {
+            await client.query(migrations[path]);
+            await client.query("insert into _migrations (name) values ($1)", [name]);
+            await client.query("commit");
+          } catch (err) {
+            await client.query("rollback");
+            throw err;
+          }
+        }
+      } finally {
+        client.release();
+      }
+    };
+    globalRef.__neonMigrateChain__ = (globalRef.__neonMigrateChain__ ?? Promise.resolve())
+      .catch(() => undefined)
+      .then(migrate);
+    await globalRef.__neonMigrateChain__;
+    return sql;
   })().catch((err) => {
     globalRef.__pgSqlPromise__ = undefined;
     throw err;
@@ -111,7 +148,23 @@ async function createPgliteSql(): Promise<Sql> {
   // data survives source edits (it resets on dev-server restart).
   globalRef.__pgliteInstance__ ??= (async () => {
     const { PGlite } = await import("@electric-sql/pglite");
+    const cwd = typeof process !== "undefined" ? process.cwd() : ".";
+    const candidates = [
+      join(cwd, "node_modules/@electric-sql/pglite/dist/pglite.data"),
+      "/var/task/_libs/pglite.data",
+      "/var/task/pglite.data",
+      join(cwd, "_libs/pglite.data"),
+      join(cwd, "pglite.data"),
+    ];
+    let fsBundle: Blob | undefined;
+    for (const file of candidates) {
+      if (!existsSync(file)) continue;
+      const buf = await readFile(file);
+      fsBundle = new Blob([new Uint8Array(buf)]);
+      break;
+    }
     const pg = new PGlite({
+      ...(fsBundle ? { fsBundle } : {}),
       parsers: {
         [OID_INT8]: Number,
         [OID_DATE]: identity,
@@ -220,7 +273,6 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
  * module kick it off immediately (see bottom of file).
  */
 export function ensureDbReady(): Promise<void> {
-  if (dbSource !== "pglite") return Promise.resolve();
   return getSql().then(() => undefined);
 }
 
