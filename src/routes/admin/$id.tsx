@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { StatusBadge, TrackResult } from "@/components/track-result";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { COMPANY, waLink } from "@/lib/company";
 import { SERVICE_META, STATUSES, STATUS_META } from "@/lib/shipments";
-import { addShipmentEvent, getShipment } from "@/lib/shipments.fn";
+import { addShipmentEvent, deleteShipment, getShipment } from "@/lib/shipments.fn";
 import { formatDateTime } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/$id")({ component: ShipmentDetail });
@@ -15,7 +15,9 @@ export const Route = createFileRoute("/admin/$id")({ component: ShipmentDetail }
 function ShipmentDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [pending, setPending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const detail = useQuery({
     queryKey: ["shipment", id],
     queryFn: () => getShipment({ data: { id } }),
@@ -140,6 +142,31 @@ function ShipmentDetail() {
           </Button>
           <Button type="button" variant="ghost" className="w-full no-print" onClick={() => window.print()}>
             طباعة البوليصة
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-brand text-brand hover:bg-brand hover:text-on-navy"
+            disabled={deleting}
+            onClick={() => {
+              void (async () => {
+                const ok = window.confirm(`حذف الشحنة ${shipment.id} نهائيًا؟ لن تظهر للعميل بعد الحذف.`);
+                if (!ok) return;
+                setDeleting(true);
+                try {
+                  await deleteShipment({ data: { id: shipment.id } });
+                  toast.success("تم حذف الشحنة");
+                  await qc.invalidateQueries({ queryKey: ["shipments"] });
+                  await navigate({ to: "/admin" });
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "تعذّر الحذف");
+                } finally {
+                  setDeleting(false);
+                }
+              })();
+            }}
+          >
+            {deleting ? "جارٍ الحذف…" : "حذف الشحنة"}
           </Button>
         </div>
       </aside>

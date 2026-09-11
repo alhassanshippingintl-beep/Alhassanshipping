@@ -266,6 +266,19 @@ export const addShipmentEvent = createServerFn({ method: "POST" })
     return { shipment: mapShipment(rows[0]!), events: events.map(mapEvent) };
   });
 
+export const deleteShipment = createServerFn({ method: "POST" })
+  .middleware([staffMiddleware])
+  .validator((data: { id: string }) => ({
+    id: String(data.id ?? "").trim().toUpperCase(),
+  }))
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    const existing = await sql<{ id: string }>`select id from shipments where id = ${data.id} limit 1`;
+    if (!existing[0]) throw new Error("الشحنة غير موجودة");
+    await sql`delete from shipments where id = ${data.id}`;
+    return { ok: true as const, id: data.id };
+  });
+
 export const submitInquiry = createServerFn({ method: "POST" })
   .validator((data: { name: string; phone: string; email: string; service: string; message: string }) => ({
     name: requireText(data.name, "الاسم"),
