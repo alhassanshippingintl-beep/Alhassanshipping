@@ -2,11 +2,10 @@ import { SignJWT, jwtVerify } from "jose";
 import { getCookie, setCookie } from "@tanstack/react-start/server";
 import { STAFF_COOKIE } from "./staff";
 
-const STAFF_USERNAME = "alhassan";
-const STAFF_PASSWORD = "444222";
-const SECRET = new TextEncoder().encode(
-  process.env.STAFF_JWT_SECRET ?? "ah-staff-jwt-v2-7c91e4b0d6a28f35",
-);
+const STAFF_USERNAME = process.env.STAFF_USERNAME?.trim() ?? "";
+const STAFF_PASSWORD = process.env.STAFF_PASSWORD ?? "";
+const STAFF_JWT_SECRET = process.env.STAFF_JWT_SECRET ?? "";
+const SECRET = new TextEncoder().encode(STAFF_JWT_SECRET);
 const MAX_AGE = 60 * 60 * 24 * 7;
 
 function cookieSecure() {
@@ -18,6 +17,9 @@ export function credentialsOk(username: string, password: string) {
 }
 
 export async function issueStaffToken() {
+  if (!STAFF_USERNAME || !STAFF_PASSWORD || !STAFF_JWT_SECRET) {
+    throw new Error("Staff authentication is not configured");
+  }
   return new SignJWT({ role: "staff" })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(STAFF_USERNAME)
