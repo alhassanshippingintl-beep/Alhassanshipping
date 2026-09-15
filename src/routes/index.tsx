@@ -31,6 +31,9 @@ function HomePage() {
               <Button asChild size="lg" variant="outline" className="border-on-navy/30 bg-transparent text-on-navy hover:bg-on-navy/10">
                 <Link to="/contact">اطلب عرض سعر</Link>
               </Button>
+              <Button asChild size="lg" variant="outline" className="border-brand-soft/60 bg-brand/15 text-on-navy hover:bg-brand/25">
+                <Link to="/download">تحميل التطبيق</Link>
+              </Button>
             </div>
           </div>
           <div className="rounded-2xl border border-on-navy/15 bg-on-navy/8 p-6 backdrop-blur-sm">

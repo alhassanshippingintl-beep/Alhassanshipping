@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DownloadRouteImport } from './routes/download'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReviewsRouteImport } from './routes/reviews'
 import { Route as TrackRouteImport } from './routes/track'
@@ -40,6 +41,11 @@ const AdminRoute = AdminRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadRoute = DownloadRouteImport.update({
+  id: '/download',
+  path: '/download',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
+  '/download': typeof DownloadRoute
   '/login': typeof LoginRoute
   '/reviews': typeof ReviewsRoute
   '/track': typeof TrackRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/download': typeof DownloadRoute
   '/login': typeof LoginRoute
   '/reviews': typeof ReviewsRoute
   '/track': typeof TrackRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
+  '/download': typeof DownloadRoute
   '/login': typeof LoginRoute
   '/reviews': typeof ReviewsRoute
   '/track': typeof TrackRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/contact'
+    | '/download'
     | '/login'
     | '/reviews'
     | '/track'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contact'
+    | '/download'
     | '/login'
     | '/reviews'
     | '/track'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/contact'
+    | '/download'
     | '/login'
     | '/reviews'
     | '/track'
@@ -174,6 +186,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   ContactRoute: typeof ContactRoute
+  DownloadRoute: typeof DownloadRoute
   LoginRoute: typeof LoginRoute
   ReviewsRoute: typeof ReviewsRoute
   TrackRoute: typeof TrackRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download': {
+      id: '/download'
+      path: '/download'
+      fullPath: '/download'
+      preLoaderRoute: typeof DownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -290,6 +310,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   ContactRoute: ContactRoute,
+  DownloadRoute: DownloadRoute,
   LoginRoute: LoginRoute,
   ReviewsRoute: ReviewsRoute,
   TrackRoute: TrackRoute,
