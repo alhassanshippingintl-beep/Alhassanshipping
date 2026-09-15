@@ -35,7 +35,6 @@ function TrackPage() {
       <section className="mx-auto max-w-3xl px-5 py-10">
         <div className="mb-8 rounded-2xl border border-line bg-surface p-6">
           <TrackForm initial={trackingNumber} />
-          <p className="mt-3 text-xs text-muted">أمثلة: {COMPANY.sampleTracking.join(" · ")}</p>
         </div>
         {trackingNumber && result.isPending ? (
           <div className="h-40 animate-pulse rounded-2xl bg-line" />

@@ -47,7 +47,6 @@ function HomePage() {
       <section className="relative z-10 mx-auto -mt-8 max-w-3xl px-5">
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-lg sm:p-8">
           <h2 className="text-center text-2xl font-black">أدخل رقم التتبع</h2>
-          <p className="mb-5 text-center text-sm text-muted">مثال: {COMPANY.sampleTracking.join(" · ")}</p>
           <TrackForm />
         </div>
       </section>

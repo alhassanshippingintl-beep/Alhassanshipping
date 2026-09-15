@@ -23,18 +23,12 @@ export function TrackForm({ initial = "", compact }: { initial?: string; compact
         <Input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="مثال: AH-2026-10001"
           className="pr-10 text-left font-mono"
           dir="ltr"
           aria-label="رقم التتبع"
         />
       </div>
       <Button type="submit">تتبّع</Button>
-      {compact ? null : (
-        <p className="w-full text-center text-xs text-muted sm:hidden">
-          جرّب {COMPANY.sampleTracking[0]}
-        </p>
-      )}
     </form>
   );
 }
