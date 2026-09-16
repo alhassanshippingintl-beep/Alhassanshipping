@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
-  "build": 2,
+  "version": "1.2.0",
+  "build": 3,
   "apkUrl": "https://alhassanshipping.vercel.app/alhassan-shipping-arm64.apk",
   "mandatory": false,
-  "notes": "واجهة شحن جديدة، تتبع أسرع، ووصول سريع للخدمات وخدمة العملاء."
+  "notes": "شريط تنقل سفلي، أقسام خدمات جديدة، وواجهة فاتحة مريحة بدل الخلفية الداكنة."
 }
