@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { COMPANY, waLink } from "@/lib/company";
 import { SERVICE_META, STATUSES, STATUS_META } from "@/lib/shipments";
-import { addShipmentEvent, deleteShipment, getShipment } from "@/lib/shipments.fn";
+import { addShipmentEvent, deleteShipment, getShipment, updateShipment } from "@/lib/shipments.fn";
 import { formatDateTime } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/$id")({ component: ShipmentDetail });
@@ -18,6 +18,7 @@ function ShipmentDetail() {
   const navigate = useNavigate();
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const detail = useQuery({
     queryKey: ["shipment", id],
     queryFn: () => getShipment({ data: { id } }),
@@ -45,6 +46,28 @@ function ShipmentDetail() {
       toast.error(err instanceof Error ? err.message : "تعذّر التحديث");
     } finally {
       setPending(false);
+    }
+  }
+
+  async function onEdit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!shipment) return;
+    const fd = new FormData(e.currentTarget);
+    setEditing(true);
+    try {
+      await updateShipment({ data: {
+        id: shipment.id, senderName: String(fd.get("senderName") ?? ""), senderPhone: String(fd.get("senderPhone") ?? ""),
+        senderCity: String(fd.get("senderCity") ?? ""), senderCountry: String(fd.get("senderCountry") ?? ""), receiverName: String(fd.get("receiverName") ?? ""),
+        receiverPhone: String(fd.get("receiverPhone") ?? ""), receiverCity: String(fd.get("receiverCity") ?? ""), receiverCountry: String(fd.get("receiverCountry") ?? ""),
+        origin: String(fd.get("origin") ?? ""), destination: String(fd.get("destination") ?? ""), serviceType: String(fd.get("serviceType") ?? "land"),
+        packageDesc: String(fd.get("packageDesc") ?? ""), weightKg: String(fd.get("weightKg") ?? ""), pieces: String(fd.get("pieces") ?? "1"), notes: String(fd.get("notes") ?? ""),
+      } });
+      toast.success("تم تعديل بيانات الشحنة");
+      await qc.invalidateQueries({ queryKey: ["shipment", id] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر التعديل");
+    } finally {
+      setEditing(false);
     }
   }
 
@@ -101,6 +124,28 @@ function ShipmentDetail() {
         </div>
       </div>
       <aside className="space-y-4">
+        <form onSubmit={onEdit} className="space-y-3 rounded-2xl border border-line bg-surface p-5">
+          <h2 className="font-black">تعديل بيانات الشحنة</h2>
+          <p className="text-xs text-muted">رقم الشحنة ثابت، ويمكن تعديل باقي البيانات.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="اسم المرسل"><Input name="senderName" defaultValue={shipment.senderName} required /></Field>
+            <Field label="هاتف المرسل"><Input name="senderPhone" defaultValue={shipment.senderPhone} required dir="ltr" className="text-left" /></Field>
+            <Field label="مدينة المرسل"><Input name="senderCity" defaultValue={shipment.senderCity} /></Field>
+            <Field label="دولة المرسل"><Input name="senderCountry" defaultValue={shipment.senderCountry} /></Field>
+            <Field label="اسم المستلم"><Input name="receiverName" defaultValue={shipment.receiverName} required /></Field>
+            <Field label="هاتف المستلم"><Input name="receiverPhone" defaultValue={shipment.receiverPhone} required dir="ltr" className="text-left" /></Field>
+            <Field label="مدينة المستلم"><Input name="receiverCity" defaultValue={shipment.receiverCity} /></Field>
+            <Field label="دولة المستلم"><Input name="receiverCountry" defaultValue={shipment.receiverCountry} /></Field>
+            <Field label="مدينة الانطلاق"><Input name="origin" defaultValue={shipment.origin} required /></Field>
+            <Field label="مدينة الوصول"><Input name="destination" defaultValue={shipment.destination} required /></Field>
+            <Field label="نوع الخدمة"><select name="serviceType" defaultValue={shipment.serviceType} className="h-11 w-full rounded-xl border-2 border-line bg-surface px-3.5 text-sm font-semibold"><option value="land">شحن بري</option><option value="sea">شحن بحري</option><option value="air">شحن جوي</option></select></Field>
+            <Field label="عدد الطرود"><Input name="pieces" type="number" min={1} defaultValue={shipment.pieces} /></Field>
+            <Field label="الوزن بالكغ"><Input name="weightKg" type="number" step="0.1" min={0} defaultValue={shipment.weightKg ?? ""} /></Field>
+            <Field label="وصف البضاعة"><Input name="packageDesc" defaultValue={shipment.packageDesc} /></Field>
+          </div>
+          <Field label="ملاحظات داخلية"><Textarea name="notes" defaultValue={shipment.notes} /></Field>
+          <Button type="submit" disabled={editing} className="w-full">{editing ? "جارٍ الحفظ…" : "حفظ تعديل البيانات"}</Button>
+        </form>
         <form onSubmit={onUpdate} className="space-y-3 rounded-2xl border border-line bg-surface p-5">
           <h2 className="font-black">تحديث الحالة</h2>
           <p className="text-xs text-muted">أي تحديث يظهر للعميل مباشرة عند إدخال الرقم</p>

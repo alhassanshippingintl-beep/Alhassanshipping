@@ -19,6 +19,7 @@ function NewShipment() {
     try {
       const shipment = await createShipment({
         data: {
+          id: String(fd.get("id") ?? ""),
           senderName: String(fd.get("senderName") ?? ""),
           senderPhone: String(fd.get("senderPhone") ?? ""),
           senderCity: String(fd.get("senderCity") ?? ""),
@@ -88,6 +89,9 @@ function NewShipment() {
       <h1 className="mb-6 text-3xl font-black">شحنة جديدة</h1>
       <form onSubmit={onSubmit} className="space-y-6 rounded-2xl border border-line bg-surface p-6">
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="رقم الشحنة اليدوي">
+            <Input name="id" required placeholder="مثال: AH-2026-10004" dir="ltr" className="text-left" />
+          </Field>
           <Field label="اسم المرسل">
             <Input name="senderName" required />
           </Field>

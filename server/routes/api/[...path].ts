@@ -172,6 +172,26 @@ export default defineEventHandler(async (event) => {
     return (await shipmentWithEvents(String(parts[1]).trim().toUpperCase(), false)) ?? { shipment: null, events: [] };
   }
 
+  if (method === "PATCH" && parts.length === 2) {
+    const id = String(parts[1]).trim().toUpperCase();
+    const body = (await readBody(event)) as Record<string, any>;
+    const required = ["senderName", "senderPhone", "receiverName", "receiverPhone", "origin", "destination"];
+    for (const key of required) if (!String(body?.[key] ?? "").trim()) error(400, `${key} required`);
+    const serviceType = String(body?.serviceType ?? "land");
+    if (!serviceLabels[serviceType]) error(400, "Invalid serviceType");
+    const existing = await sql<any>`select id from shipments where id = ${id} limit 1`;
+    if (!existing[0]) error(404, "Shipment not found");
+    await sql`update shipments set sender_name=${String(body.senderName).trim()}, sender_phone=${String(body.senderPhone).trim()}, sender_city=${String(body.senderCity ?? "")}, sender_country=${String(body.senderCountry ?? "")}, receiver_name=${String(body.receiverName).trim()}, receiver_phone=${String(body.receiverPhone).trim()}, receiver_city=${String(body.receiverCity ?? "")}, receiver_country=${String(body.receiverCountry ?? "")}, origin=${String(body.origin).trim()}, destination=${String(body.destination).trim()}, service_type=${serviceType}, package_desc=${String(body.packageDesc ?? "")}, weight_kg=${body.weightKg === "" || body.weightKg == null ? null : Number(body.weightKg)}, pieces=${Math.max(1, Number(body.pieces) || 1)}, notes=${String(body.notes ?? "")}, updated_at=now() where id=${id}`;
+    return (await shipmentWithEvents(id, false))!;
+  }
+
+  if (method === "DELETE" && parts.length === 2) {
+    const id = String(parts[1]).trim().toUpperCase();
+    const result = await sql`delete from shipments where id = ${id} returning id`;
+    if (!result[0]) error(404, "Shipment not found");
+    return { ok: true, id };
+  }
+
   if (method === "PATCH" && parts.length === 3 && parts[2] === "status") {
     const id = String(parts[1]).trim().toUpperCase();
     const body = (await readBody(event)) as { status?: string; location?: string; note?: string };
@@ -190,9 +210,10 @@ export default defineEventHandler(async (event) => {
     for (const key of required) if (!String(body?.[key] ?? "").trim()) error(400, `${key} required`);
     const serviceType = String(body?.serviceType ?? "land");
     if (!serviceLabels[serviceType]) error(400, "Invalid serviceType");
-    const year = new Date().getFullYear();
-    const seq = await sql<any>`insert into shipment_seq (year, last_n) values (${year}, 10000) on conflict (year) do update set last_n = shipment_seq.last_n + 1 returning last_n`;
-    const id = `AH-${year}-${String(seq[0]?.last_n ?? 10000).padStart(5, "0")}`;
+    const id = String(body?.id ?? "").trim().toUpperCase();
+    if (id.length < 3 || id.length > 80) error(400, "id required (3-80 characters)");
+    const duplicate = await sql<any>`select id from shipments where id = ${id} limit 1`;
+    if (duplicate[0]) error(409, "Shipment id already exists");
     await sql`insert into shipments (id, sender_name, sender_phone, sender_city, sender_country, receiver_name, receiver_phone, receiver_city, receiver_country, origin, destination, service_type, package_desc, weight_kg, pieces, status, notes, created_by) values (${id}, ${body.senderName}, ${body.senderPhone}, ${body.senderCity ?? ""}, ${body.senderCountry ?? ""}, ${body.receiverName}, ${body.receiverPhone}, ${body.receiverCity ?? ""}, ${body.receiverCountry ?? ""}, ${body.origin}, ${body.destination}, ${serviceType}, ${body.packageDesc ?? ""}, ${body.weightKg === "" || body.weightKg == null ? null : Number(body.weightKg)}, ${Number(body.pieces) || 1}, 'registered', ${body.notes ?? ""}, ${"alhassan"})`;
     await sql`insert into shipment_events (shipment_id, status, location, note, created_by) values (${id}, 'registered', ${body.origin}, 'تم تسجيل الشحنة في النظام', ${"alhassan"})`;
     return (await shipmentWithEvents(id, false))!;

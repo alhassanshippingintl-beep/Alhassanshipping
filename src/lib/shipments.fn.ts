@@ -12,6 +12,7 @@ import {
   type Shipment,
   type ShipmentEvent,
   type ShipmentStatus,
+  type UpdateShipmentInput,
 } from "@/lib/shipments";
 
 type ShipmentRow = {
@@ -185,6 +186,7 @@ export const createShipment = createServerFn({ method: "POST" })
       throw new Error("الوزن غير صالح");
     }
     return {
+      id: requireText(data.id, "رقم الشحنة", 3, 80).toUpperCase(),
       senderName: requireText(data.senderName, "اسم المرسل"),
       senderPhone: requireText(data.senderPhone, "هاتف المرسل", 6, 30),
       senderCity: String(data.senderCity ?? "").trim(),
@@ -204,14 +206,9 @@ export const createShipment = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const sql = await getSql();
-    const year = new Date().getFullYear();
-    const seq = await sql<{ last_n: number }>`
-      insert into shipment_seq (year, last_n) values (${year}, 10000)
-      on conflict (year) do update set last_n = shipment_seq.last_n + 1
-      returning last_n
-    `;
-    const n = seq[0]?.last_n ?? 10000;
-    const id = `AH-${year}-${String(n).padStart(5, "0")}`;
+    const id = data.id;
+    const duplicate = await sql<{ id: string }>`select id from shipments where id = ${id} limit 1`;
+    if (duplicate[0]) throw new Error("رقم الشحنة مستخدم بالفعل، اختر رقمًا آخر");
     await sql`
       insert into shipments (
         id, sender_name, sender_phone, sender_city, sender_country,
@@ -230,6 +227,39 @@ export const createShipment = createServerFn({ method: "POST" })
       values (${id}, 'registered', ${data.origin}, 'تم تسجيل الشحنة في النظام', ${context.userId})
     `;
     const rows = await sql<ShipmentRow>`select * from shipments where id = ${id} limit 1`;
+    return mapShipment(rows[0]!);
+  });
+
+export const updateShipment = createServerFn({ method: "POST" })
+  .middleware([staffMiddleware])
+  .validator((data: UpdateShipmentInput) => {
+    const serviceType = String(data.serviceType ?? "land");
+    if (!isServiceType(serviceType)) throw new Error("نوع الخدمة غير صالح");
+    const pieces = Math.max(1, Math.min(9999, Number(data.pieces) || 1));
+    const weightRaw = String(data.weightKg ?? "").trim();
+    const weightKg = weightRaw === "" ? null : Number(weightRaw);
+    if (weightKg != null && (!Number.isFinite(weightKg) || weightKg < 0)) throw new Error("الوزن غير صالح");
+    return {
+      id: requireText(data.id, "رقم الشحنة", 3, 80).toUpperCase(),
+      senderName: requireText(data.senderName, "اسم المرسل"), senderPhone: requireText(data.senderPhone, "هاتف المرسل", 6, 30),
+      senderCity: String(data.senderCity ?? "").trim(), senderCountry: String(data.senderCountry ?? "").trim(),
+      receiverName: requireText(data.receiverName, "اسم المستلم"), receiverPhone: requireText(data.receiverPhone, "هاتف المستلم", 6, 30),
+      receiverCity: String(data.receiverCity ?? "").trim(), receiverCountry: String(data.receiverCountry ?? "").trim(),
+      origin: requireText(data.origin, "مدينة الانطلاق"), destination: requireText(data.destination, "مدينة الوصول"), serviceType,
+      packageDesc: String(data.packageDesc ?? "").trim(), weightKg, pieces, notes: String(data.notes ?? "").trim(),
+    };
+  })
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    const existing = await sql<{ id: string }>`select id from shipments where id = ${data.id} limit 1`;
+    if (!existing[0]) throw new Error("الشحنة غير موجودة");
+    await sql`
+      update shipments set sender_name=${data.senderName}, sender_phone=${data.senderPhone}, sender_city=${data.senderCity}, sender_country=${data.senderCountry},
+        receiver_name=${data.receiverName}, receiver_phone=${data.receiverPhone}, receiver_city=${data.receiverCity}, receiver_country=${data.receiverCountry},
+        origin=${data.origin}, destination=${data.destination}, service_type=${data.serviceType}, package_desc=${data.packageDesc}, weight_kg=${data.weightKg}, pieces=${data.pieces}, notes=${data.notes}, updated_at=now()
+      where id=${data.id}
+    `;
+    const rows = await sql<ShipmentRow>`select * from shipments where id = ${data.id} limit 1`;
     return mapShipment(rows[0]!);
   });
 

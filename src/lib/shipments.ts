@@ -85,6 +85,7 @@ export type Inquiry = {
 };
 
 export type CreateShipmentInput = {
+  id: string;
   senderName: string;
   senderPhone: string;
   senderCity: string;
@@ -101,3 +102,5 @@ export type CreateShipmentInput = {
   pieces: string;
   notes: string;
 };
+
+export type UpdateShipmentInput = Omit<CreateShipmentInput, "id"> & { id: string };
